@@ -1,0 +1,310 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+    paths:
+      - ".github/workflows/**"
+      - "backend/**"
+      - "frontend/**"
+      - "temporal/**"
+      - "observability/**"
+      - "deploy/**"
+      - "docs/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "docker-compose.yml"
+      - ".env.example"
+      - "README.md"
+      - "ROADMAP.md"
+      - "DESIGN.md"
+      - "PR_GUIDE.md"
+      - "CONTRIBUTING.md"
+      - "LICENSE"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  approval-gate:
+    name: Approval gate
+    runs-on: ubuntu-latest
+    outputs:
+      trusted: ${{ steps.permission.outputs.trusted }}
+    steps:
+      - name: Check contributor permissions
+        id: permission
+        uses: actions/github-script@v7
+        env:
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+            const triggeringActor = process.env.TRIGGERING_ACTOR || context.actor;
+            const sameRepository = pr.head.repo.full_name === pr.base.repo.full_name;
+
+            if (sameRepository) {
+              core.setOutput("trusted", "true");
+              core.info("PR branch is in this repository. CI may run automatically.");
+              return;
+            }
+
+            const response = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner,
+              repo,
+              username: triggeringActor,
+            });
+            const permission = response.data.permission;
+            const trusted = ["admin", "maintain", "write"].includes(permission);
+            core.setOutput("trusted", trusted ? "true" : "false");
+
+            if (!trusted) {
+              core.setFailed(
+                `CI for forked PRs requires maintainer approval. ` +
+                `A maintainer with write access can approve by re-running this workflow. ` +
+                `Triggering actor '${triggeringActor}' has '${permission}' permission.`
+              );
+            }
+
+  changes:
+    name: Changed files
+    runs-on: ubuntu-latest
+    needs: approval-gate
+    if: needs.approval-gate.outputs.trusted == 'true'
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      temporal: ${{ steps.filter.outputs.temporal }}
+      observability: ${{ steps.filter.outputs.observability }}
+      compose: ${{ steps.filter.outputs.compose }}
+      docs: ${{ steps.filter.outputs.docs }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect changed service paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - "backend/**"
+              - "Cargo.toml"
+              - "Cargo.lock"
+              - "rust-toolchain.toml"
+            frontend:
+              - "frontend/**"
+            temporal:
+              - "temporal/**"
+            observability:
+              - "observability/**"
+            compose:
+              - "docker-compose.yml"
+              - "deploy/**"
+              - "backend/Dockerfile"
+              - "frontend/Dockerfile"
+              - "temporal/**"
+              - "observability/**"
+            docs:
+              - "docs/**"
+              - "*.md"
+              - ".env.example"
+            workflows:
+              - ".github/workflows/**"
+
+  backend-rust:
+    name: Backend Rust fmt, lint, test, build
+    runs-on: ubuntu-latest
+    needs:
+      - approval-gate
+      - changes
+    if: needs.approval-gate.outputs.trusted == 'true' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.workflows == 'true')
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sango
+          POSTGRES_PASSWORD: sango
+          POSTGRES_DB: sango_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sango -d sango_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgres://sango:sango@localhost:5432/sango_ci
+      SANGO_TEST_DATABASE_URL: postgres://sango:sango@localhost:5432/sango_ci
+      SANGO_DB_PUSH_SCHEMA: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show Rust toolchain
+        run: rustup show
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          shared-key: rust-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}
+      - name: Fetch dependencies
+        run: cargo fetch --locked
+      - name: Check version consistency
+        run: ./scripts/check-version.sh
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Lint with clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Run tests
+        run: cargo test --workspace --locked
+      - name: Build binaries
+        run: cargo build --workspace --bins --locked
+
+  frontend:
+    name: Frontend format, lint, build
+    runs-on: ubuntu-latest
+    needs:
+      - approval-gate
+      - changes
+    if: needs.approval-gate.outputs.trusted == 'true' && (needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true')
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Check formatting with Biome
+        run: npm run format:check
+      - name: Lint with Biome and typecheck
+        run: npm run lint
+      - name: Build frontend
+        run: npm run build
+
+  temporal:
+    name: Temporal config lint and image build
+    runs-on: ubuntu-latest
+    needs:
+      - approval-gate
+      - changes
+    if: needs.approval-gate.outputs.trusted == 'true' && (needs.changes.outputs.temporal == 'true' || needs.changes.outputs.workflows == 'true')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Temporal Compose config
+        run: docker compose -f temporal/docker-compose.yml config --quiet
+      - name: Build Temporal image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./temporal
+          push: false
+          cache-from: type=gha,scope=temporal
+          cache-to: type=gha,scope=temporal,mode=max
+
+  observability:
+    name: Observability config lint
+    runs-on: ubuntu-latest
+    needs:
+      - approval-gate
+      - changes
+    if: needs.approval-gate.outputs.trusted == 'true' && (needs.changes.outputs.observability == 'true' || needs.changes.outputs.workflows == 'true')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate observability Compose config
+        run: docker compose -f observability/docker-compose.yml config --quiet
+
+  compose:
+    name: Root Compose and Dockerfile lint
+    runs-on: ubuntu-latest
+    needs:
+      - approval-gate
+      - changes
+    if: needs.approval-gate.outputs.trusted == 'true' && (needs.changes.outputs.compose == 'true' || needs.changes.outputs.workflows == 'true')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate root Compose config
+        run: docker compose config --quiet
+      - name: Lint backend Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: backend/Dockerfile
+      - name: Lint frontend Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: frontend/Dockerfile
+      - name: Lint temporal Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: temporal/Dockerfile
+
+  docs:
+    name: Docs formatting
+    runs-on: ubuntu-latest
+    needs:
+      - approval-gate
+      - changes
+    if: needs.approval-gate.outputs.trusted == 'true' && (needs.changes.outputs.docs == 'true' || needs.changes.outputs.workflows == 'true')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check Markdown and YAML formatting
+        run: >-
+          npx --yes prettier@3.6.2 --check
+          "README.md"
+          "ROADMAP.md"
+          "DESIGN.md"
+          "PR_GUIDE.md"
+          "CONTRIBUTING.md"
+          "docs/**/*.{md,yml,yaml}"
+          ".github/workflows/*.yml"
+
+  ci-summary:
+    name: CI summary
+    runs-on: ubuntu-latest
+    needs:
+      - approval-gate
+      - changes
+      - backend-rust
+      - frontend
+      - temporal
+      - observability
+      - compose
+      - docs
+    if: always()
+    steps:
+      - name: Check required job results
+        run: |
+          if [ "${{ needs.approval-gate.result }}" != "success" ]; then
+            echo "Approval gate did not pass."
+            exit 1
+          fi
+
+          for job in backend-rust frontend temporal observability compose docs; do
+            result="$(echo '${{ toJson(needs) }}' | jq -r ".\"$job\".result")"
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
+              echo "$job failed with result: $result"
+              exit 1
+            fi
+          done
+
+          echo "All required CI jobs passed or were skipped because their paths did not change."

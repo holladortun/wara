@@ -1,0 +1,62 @@
+name: sango
+include:
+  - temporal/docker-compose.yml
+  - observability/docker-compose.yml
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sango}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sango}
+      POSTGRES_DB: ${POSTGRES_DB:-sango}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sango}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-sango}:${POSTGRES_PASSWORD:-sango}@postgres:5432/${POSTGRES_DB:-sango}
+      BIND_ADDR: 0.0.0.0:8080
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: default
+      SANGO_SECRET_KEY: ${SANGO_SECRET_KEY:-development-secret-change-me}
+      SANGO_TELEMETRY_ENABLED: ${SANGO_TELEMETRY_ENABLED:-false}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://jaeger:4317}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "${FRONTEND_PORT:-4200}:80"
+
+  temporal-worker-default:
+    build:
+      context: ./backend
+    command: ["temporal_worker", "default"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-sango}:${POSTGRES_PASSWORD:-sango}@postgres:5432/${POSTGRES_DB:-sango}
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: default
+    depends_on:
+      temporal:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+

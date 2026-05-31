@@ -1,0 +1,58 @@
+use axum::{Router, routing::get};
+use utoipa_swagger_ui::SwaggerUi;
+
+use crate::{libs::metrics, openapi::ApiDoc, state::AppState};
+use utoipa::OpenApi;
+
+pub mod admin;
+pub mod auth;
+pub mod credentials;
+pub mod deployments;
+pub mod domains;
+pub mod environments;
+pub mod projects;
+pub mod servers;
+pub mod services;
+pub mod telemetry;
+pub mod templates;
+
+pub fn router(state: AppState) -> Router {
+    let api = Router::new()
+        .merge(auth::router())
+        .merge(servers::router())
+        .merge(projects::router())
+        .merge(environments::router())
+        .merge(services::router())
+        .merge(credentials::router())
+        .merge(domains::router())
+        .merge(deployments::router())
+        .merge(templates::router())
+        .merge(telemetry::router())
+        .merge(admin::router());
+
+    let mut app = Router::new()
+        .route("/health", get(health))
+        .route("/metrics", get(metrics::metrics_handler))
+        .nest("/api/v1", api)
+        .route("/api/openapi.json", get(openapi_json))
+        .with_state(state.clone());
+
+    if state.config.docs_enabled {
+        app = app.merge(SwaggerUi::new("/docs").url("/docs/openapi.json", ApiDoc::openapi()));
+    }
+
+    app
+}
+
+#[utoipa::path(
+    get,
+    path = "/health",
+    responses((status = 200, description = "Platform health check"))
+)]
+pub async fn health() -> &'static str {
+    "ok"
+}
+
+pub async fn openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
+    axum::Json(ApiDoc::openapi())
+}
