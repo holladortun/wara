@@ -72,6 +72,24 @@ cd frontend
 npm test
 ```
 
+For CLI changes:
+
+```bash
+make cli-validate
+```
+
+For MCP server changes:
+
+```bash
+make mcp-validate
+```
+
+For documentation changes:
+
+```bash
+make docs-validate
+```
+
 If your work touches Docker Compose, Temporal, or observability, also run the
 relevant local stack and document what you verified.
 
@@ -178,7 +196,17 @@ Add screenshots for frontend changes.
 CI runs automatically for PRs from contributors with write access to the
 repository. For forked PRs from external contributors, CI is gated until a
 maintainer approves by re-running the workflow. CI only runs for PRs targeting
-`dev` or `main`, and path filters skip services that were not touched.
+`dev` or `main`.
+
+CI is split by component so status checks are easy to track:
+
+- Core CI covers backend, frontend, Temporal, Compose, observability, and core
+  image versioning.
+- CLI CI covers `cli/**`.
+- MCP CI covers `mcp/**`.
+- Docs CI covers documentation, repository Markdown, and docs package versioning.
+
+Each workflow has its own path filters and only runs for relevant changes.
 
 ## Review Expectations
 
@@ -218,7 +246,7 @@ For dependency PRs, include:
 
 ## Version Change PRs
 
-Version changes must update:
+Core platform version changes must update:
 
 - `sango.version.toml`
 - `backend/Cargo.toml`
@@ -226,14 +254,22 @@ Version changes must update:
 - `frontend/package-lock.json`
 - `CHANGELOG.md`
 
+Independently released component version changes must update that component's
+package metadata instead:
+
+- CLI: `cli/Cargo.toml`
+- MCP server: `mcp/Cargo.toml`
+- Documentation site: `docs/package.json`
+
 Run:
 
 ```bash
 make check-version
 ```
 
-Use `MAJOR.MINOR.PATCH` for stable releases from `main`. Use
-`MAJOR.MINOR.PATCH-beta-N` for prereleases from `dev`.
+Use `MAJOR.MINOR.PATCH` for stable releases. Beta versions use
+`MAJOR.MINOR.PATCH-beta-N` and are allowed only on `dev`; they must not be used
+on `main`. Other prerelease types may be used on both `main` and `dev`.
 
 ## Generated Files
 

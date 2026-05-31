@@ -1,0 +1,102 @@
+name: Docs CI
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+    paths:
+      - ".github/workflows/docs-ci.yml"
+      - "docs/**"
+      - "*.md"
+      - "backend/README.md"
+      - "frontend/README.md"
+      - "cli/README.md"
+      - "mcp/README.md"
+      - "temporal/README.md"
+      - "observability/README.md"
+      - "deploy/README.md"
+      - ".env.example"
+      - "scripts/check-version.sh"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: docs-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  approval-gate:
+    name: Approval gate
+    runs-on: ubuntu-latest
+    outputs:
+      trusted: ${{ steps.permission.outputs.trusted }}
+    steps:
+      - name: Check contributor permissions
+        id: permission
+        uses: actions/github-script@v7
+        env:
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+            const triggeringActor = process.env.TRIGGERING_ACTOR || context.actor;
+            const sameRepository = pr.head.repo.full_name === pr.base.repo.full_name;
+
+            if (sameRepository) {
+              core.setOutput("trusted", "true");
+              return;
+            }
+
+            const response = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner,
+              repo,
+              username: triggeringActor,
+            });
+            const permission = response.data.permission;
+            const trusted = ["admin", "maintain", "write"].includes(permission);
+            core.setOutput("trusted", trusted ? "true" : "false");
+
+            if (!trusted) {
+              core.setFailed(
+                `Docs CI for forked PRs requires maintainer approval. ` +
+                `A maintainer with write access can approve by re-running this workflow.`
+              );
+            }
+
+  docs:
+    name: Docs format and version policy
+    runs-on: ubuntu-latest
+    needs: approval-gate
+    if: needs.approval-gate.outputs.trusted == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check version policy
+        run: ./scripts/check-version.sh
+      - name: Check Markdown, JSON, and YAML formatting
+        run: >-
+          npx --yes prettier@3.6.2 --check
+          "README.md"
+          "ROADMAP.md"
+          "DESIGN.md"
+          "PR_GUIDE.md"
+          "CONTRIBUTING.md"
+          "CHANGELOG.md"
+          "backend/README.md"
+          "frontend/README.md"
+          "cli/README.md"
+          "mcp/README.md"
+          "temporal/README.md"
+          "observability/README.md"
+          "deploy/README.md"
+          "docs/package.json"
+          "docs/**/*.{md,yml,yaml}"
+          ".github/workflows/*.yml"

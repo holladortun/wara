@@ -44,16 +44,24 @@ approach. Small roadmap items can be implemented directly.
 
 ## Version Updates
 
-Sango uses one product version for the monorepo. The source of truth is
-[sango.version.toml](./sango.version.toml).
+Sango does not use one version for the whole monorepo. Components that can
+evolve separately own their own versions.
 
-When changing the app version, update all of these files in the same PR:
+When changing the core platform version, update all of these files in the same
+PR:
 
 - `sango.version.toml`
 - `backend/Cargo.toml`
 - `frontend/package.json`
 - `frontend/package-lock.json`
 - `CHANGELOG.md`
+
+When changing independently released components, update only that component's
+package metadata and changelog/release notes:
+
+- CLI: `cli/Cargo.toml`
+- MCP server: `mcp/Cargo.toml`
+- Documentation site: `docs/package.json`
 
 Then run:
 
@@ -63,22 +71,27 @@ make check-version
 
 Version format:
 
-- Stable production versions use `MAJOR.MINOR.PATCH`, for example `0.1.0`.
-- Development prereleases from `dev` use `MAJOR.MINOR.PATCH-beta-N`, for example
-  `0.2.0-beta-1`.
+- Stable versions use `MAJOR.MINOR.PATCH`, for example `0.1.0`.
+- Beta versions use `MAJOR.MINOR.PATCH-beta-N`, for example `0.2.0-beta-1`.
+- Beta versions are allowed only on `dev`; they must never be merged or released
+  from `main`.
+- Other prerelease types, such as `alpha` or `rc`, may be used on both `main`
+  and `dev`.
 - Increment the beta number for each new prerelease of the same base version.
 
-Release tags create Docker images:
+Release tags:
 
-- Stable releases are tagged from `main` as `vMAJOR.MINOR.PATCH`.
-- Beta releases are tagged from `dev` as `vMAJOR.MINOR.PATCH-beta-N`.
-- The tag must match `sango.version.toml` exactly with a leading `v`.
+- Core platform releases use `vVERSION` and publish Docker images.
+- CLI releases use `cli-vVERSION`.
+- MCP server releases use `mcp-vVERSION`.
+- Documentation site releases use `docs-vVERSION`.
+- The tag must match the relevant package version exactly.
 
 Example:
 
 ```bash
 git checkout dev
-# update version files to 0.2.0-beta-1
+# update core platform version files to 0.2.0-beta-1
 make check-version
 git tag v0.2.0-beta-1
 git push origin v0.2.0-beta-1

@@ -1,0 +1,91 @@
+name: CLI CI
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+    paths:
+      - ".github/workflows/cli-ci.yml"
+      - "cli/**"
+      - "rust-toolchain.toml"
+      - "scripts/check-version.sh"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: cli-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  approval-gate:
+    name: Approval gate
+    runs-on: ubuntu-latest
+    outputs:
+      trusted: ${{ steps.permission.outputs.trusted }}
+    steps:
+      - name: Check contributor permissions
+        id: permission
+        uses: actions/github-script@v7
+        env:
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+            const triggeringActor = process.env.TRIGGERING_ACTOR || context.actor;
+            const sameRepository = pr.head.repo.full_name === pr.base.repo.full_name;
+
+            if (sameRepository) {
+              core.setOutput("trusted", "true");
+              return;
+            }
+
+            const response = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner,
+              repo,
+              username: triggeringActor,
+            });
+            const permission = response.data.permission;
+            const trusted = ["admin", "maintain", "write"].includes(permission);
+            core.setOutput("trusted", trusted ? "true" : "false");
+
+            if (!trusted) {
+              core.setFailed(
+                `CLI CI for forked PRs requires maintainer approval. ` +
+                `A maintainer with write access can approve by re-running this workflow.`
+              );
+            }
+
+  cli:
+    name: CLI fmt, lint, test, build
+    runs-on: ubuntu-latest
+    needs: approval-gate
+    if: needs.approval-gate.outputs.trusted == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show Rust toolchain
+        run: rustup show
+      - name: Cache CLI Rust artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          workspaces: cli
+          shared-key: cli-rust-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml', 'cli/Cargo.toml') }}
+      - name: Check version policy
+        run: ./scripts/check-version.sh
+      - name: Check formatting
+        run: cargo fmt --manifest-path cli/Cargo.toml -- --check
+      - name: Lint with clippy
+        run: cargo clippy --manifest-path cli/Cargo.toml --all-targets --locked -- -D warnings
+      - name: Run tests
+        run: cargo test --manifest-path cli/Cargo.toml --locked
+      - name: Build CLI
+        run: cargo build --manifest-path cli/Cargo.toml --locked

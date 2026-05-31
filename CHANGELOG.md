@@ -14,11 +14,14 @@ and Sango uses SemVer while it is pre-1.0.
 
 ## Versioning Policy
 
-- Stable releases are tagged from `main` as `vMAJOR.MINOR.PATCH`, for example
-  `v0.1.0`.
-- Development prereleases are tagged from `dev` as
-  `vMAJOR.MINOR.PATCH-beta-N`, for example `v0.2.0-beta-1`.
-- The root `sango.version.toml` file is the source of truth for package and
-  image versions.
-- Package manifests must match `sango.version.toml` before a release tag is
-  created.
+- Core platform image releases are tagged as `vMAJOR.MINOR.PATCH`, for example
+  `v0.1.0`. The root `sango.version.toml` file is the source of truth for the
+  core platform version.
+- Backend and frontend package manifests must match `sango.version.toml` before
+  a core platform release tag is created.
+- CLI, MCP server, and documentation site versions are independent from the core
+  platform version and live in their own package manifests.
+- Independent component release tags use namespaces: `cli-vVERSION`,
+  `mcp-vVERSION`, and `docs-vVERSION`.
+- Beta versions use `MAJOR.MINOR.PATCH-beta-N` and are allowed only on `dev`.
+  Stable and other prerelease types can be used on both `main` and `dev`.

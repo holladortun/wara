@@ -3,6 +3,8 @@ SHELL := /bin/bash
 
 DOCKER_COMPOSE ?= docker compose
 FRONTEND_DIR := frontend
+CLI_DIR := cli
+MCP_DIR := mcp
 QUEUE ?= default
 
 .PHONY: help
@@ -101,6 +103,46 @@ frontend-test: ## Run frontend tests.
 frontend-build: ## Build the frontend.
 	cd $(FRONTEND_DIR) && npm run build
 
+.PHONY: cli-fmt
+cli-fmt: ## Format CLI Rust code.
+	cargo fmt --manifest-path $(CLI_DIR)/Cargo.toml
+
+.PHONY: cli-fmt-check
+cli-fmt-check: ## Check CLI Rust formatting.
+	cargo fmt --manifest-path $(CLI_DIR)/Cargo.toml -- --check
+
+.PHONY: cli-lint
+cli-lint: ## Run CLI clippy with CI settings.
+	cargo clippy --manifest-path $(CLI_DIR)/Cargo.toml --all-targets --locked -- -D warnings
+
+.PHONY: cli-test
+cli-test: ## Run CLI tests.
+	cargo test --manifest-path $(CLI_DIR)/Cargo.toml --locked
+
+.PHONY: cli-build
+cli-build: ## Build the CLI.
+	cargo build --manifest-path $(CLI_DIR)/Cargo.toml --locked
+
+.PHONY: mcp-fmt
+mcp-fmt: ## Format MCP Rust code.
+	cargo fmt --manifest-path $(MCP_DIR)/Cargo.toml
+
+.PHONY: mcp-fmt-check
+mcp-fmt-check: ## Check MCP Rust formatting.
+	cargo fmt --manifest-path $(MCP_DIR)/Cargo.toml -- --check
+
+.PHONY: mcp-lint
+mcp-lint: ## Run MCP clippy with CI settings.
+	cargo clippy --manifest-path $(MCP_DIR)/Cargo.toml --all-targets --locked -- -D warnings
+
+.PHONY: mcp-test
+mcp-test: ## Run MCP tests.
+	cargo test --manifest-path $(MCP_DIR)/Cargo.toml --locked
+
+.PHONY: mcp-build
+mcp-build: ## Build the MCP server.
+	cargo build --manifest-path $(MCP_DIR)/Cargo.toml --locked
+
 .PHONY: temporal-config
 temporal-config: ## Validate Temporal Docker Compose config.
 	$(DOCKER_COMPOSE) -f temporal/docker-compose.yml config --quiet
@@ -118,21 +160,38 @@ docs-format-check: ## Check Markdown and YAML formatting.
 		"PR_GUIDE.md" \
 		"CONTRIBUTING.md" \
 		"CHANGELOG.md" \
+		"backend/README.md" \
+		"frontend/README.md" \
+		"cli/README.md" \
+		"mcp/README.md" \
+		"temporal/README.md" \
+		"observability/README.md" \
+		"deploy/README.md" \
+		"docs/package.json" \
 		"docs/**/*.{md,yml,yaml}" \
 		".github/workflows/*.yml"
 
 .PHONY: check-version
-check-version: ## Check that all package versions match sango.version.toml.
+check-version: ## Check core and component version policy.
 	./scripts/check-version.sh
 
+.PHONY: cli-validate
+cli-validate: check-version cli-fmt-check cli-lint cli-test cli-build ## Run CLI validation.
+
+.PHONY: mcp-validate
+mcp-validate: check-version mcp-fmt-check mcp-lint mcp-test mcp-build ## Run MCP validation.
+
+.PHONY: docs-validate
+docs-validate: check-version docs-format-check ## Run docs validation.
+
 .PHONY: format
-format: backend-fmt frontend-format ## Format Rust and frontend files.
+format: backend-fmt frontend-format cli-fmt mcp-fmt ## Format Rust and frontend files.
 
 .PHONY: format-check
-format-check: backend-fmt-check frontend-format-check docs-format-check ## Check formatting.
+format-check: backend-fmt-check frontend-format-check cli-fmt-check mcp-fmt-check docs-format-check ## Check formatting.
 
 .PHONY: lint
-lint: backend-lint frontend-lint ## Run backend and frontend linters.
+lint: backend-lint frontend-lint cli-lint mcp-lint ## Run backend, frontend, CLI, and MCP linters.
 
 .PHONY: test
 test: backend-test ## Run stable automated tests.
@@ -141,4 +200,4 @@ test: backend-test ## Run stable automated tests.
 build: backend-build frontend-build ## Build backend binaries and frontend.
 
 .PHONY: validate
-validate: check-version format-check lint backend-test frontend-build compose-config temporal-config observability-config ## Run the main local validation suite.
+validate: check-version format-check lint backend-test frontend-build cli-test cli-build mcp-test mcp-build compose-config temporal-config observability-config ## Run the main local validation suite.

@@ -1,4 +1,4 @@
-name: CI
+name: Core CI
 
 on:
   pull_request:
@@ -6,31 +6,27 @@ on:
       - dev
       - main
     paths:
-      - ".github/workflows/**"
+      - ".github/workflows/core-ci.yml"
+      - ".github/workflows/release-images.yml"
       - "backend/**"
       - "frontend/**"
       - "temporal/**"
       - "observability/**"
       - "deploy/**"
-      - "docs/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - "rust-toolchain.toml"
       - "docker-compose.yml"
       - ".env.example"
-      - "README.md"
-      - "ROADMAP.md"
-      - "DESIGN.md"
-      - "PR_GUIDE.md"
-      - "CONTRIBUTING.md"
-      - "LICENSE"
+      - "sango.version.toml"
+      - "scripts/check-version.sh"
 
 permissions:
   contents: read
   pull-requests: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: core-ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -91,11 +87,11 @@ jobs:
       temporal: ${{ steps.filter.outputs.temporal }}
       observability: ${{ steps.filter.outputs.observability }}
       compose: ${{ steps.filter.outputs.compose }}
-      docs: ${{ steps.filter.outputs.docs }}
+      core_version: ${{ steps.filter.outputs.core_version }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
       - uses: actions/checkout@v4
-      - name: Detect changed service paths
+      - name: Detect core changes
         id: filter
         uses: dorny/paths-filter@v3
         with:
@@ -118,12 +114,27 @@ jobs:
               - "frontend/Dockerfile"
               - "temporal/**"
               - "observability/**"
-            docs:
-              - "docs/**"
-              - "*.md"
-              - ".env.example"
+            core_version:
+              - "sango.version.toml"
+              - "backend/Cargo.toml"
+              - "frontend/package.json"
+              - "frontend/package-lock.json"
+              - "scripts/check-version.sh"
             workflows:
-              - ".github/workflows/**"
+              - ".github/workflows/core-ci.yml"
+              - ".github/workflows/release-images.yml"
+
+  version:
+    name: Core version policy
+    runs-on: ubuntu-latest
+    needs:
+      - approval-gate
+      - changes
+    if: needs.approval-gate.outputs.trusted == 'true' && (needs.changes.outputs.core_version == 'true' || needs.changes.outputs.workflows == 'true')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check core version policy
+        run: ./scripts/check-version.sh
 
   backend-rust:
     name: Backend Rust fmt, lint, test, build
@@ -158,11 +169,9 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          shared-key: rust-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}
+          shared-key: core-rust-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}
       - name: Fetch dependencies
         run: cargo fetch --locked
-      - name: Check version consistency
-        run: ./scripts/check-version.sh
       - name: Check formatting
         run: cargo fmt --all -- --check
       - name: Lint with clippy
@@ -254,42 +263,18 @@ jobs:
         with:
           dockerfile: temporal/Dockerfile
 
-  docs:
-    name: Docs formatting
+  core-summary:
+    name: Core CI summary
     runs-on: ubuntu-latest
     needs:
       - approval-gate
       - changes
-    if: needs.approval-gate.outputs.trusted == 'true' && (needs.changes.outputs.docs == 'true' || needs.changes.outputs.workflows == 'true')
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Check Markdown and YAML formatting
-        run: >-
-          npx --yes prettier@3.6.2 --check
-          "README.md"
-          "ROADMAP.md"
-          "DESIGN.md"
-          "PR_GUIDE.md"
-          "CONTRIBUTING.md"
-          "docs/**/*.{md,yml,yaml}"
-          ".github/workflows/*.yml"
-
-  ci-summary:
-    name: CI summary
-    runs-on: ubuntu-latest
-    needs:
-      - approval-gate
-      - changes
+      - version
       - backend-rust
       - frontend
       - temporal
       - observability
       - compose
-      - docs
     if: always()
     steps:
       - name: Check required job results
@@ -299,7 +284,7 @@ jobs:
             exit 1
           fi
 
-          for job in backend-rust frontend temporal observability compose docs; do
+          for job in version backend-rust frontend temporal observability compose; do
             result="$(echo '${{ toJson(needs) }}' | jq -r ".\"$job\".result")"
             if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
               echo "$job failed with result: $result"
@@ -307,4 +292,4 @@ jobs:
             fi
           done
 
-          echo "All required CI jobs passed or were skipped because their paths did not change."
+          echo "All required core CI jobs passed or were skipped because their paths did not change."

@@ -26,6 +26,8 @@ jobs:
       channel: ${{ steps.version.outputs.channel }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Check version consistency
         run: ./scripts/check-version.sh
       - name: Read version and channel
@@ -34,6 +36,8 @@ jobs:
           version="$(sed -n 's/^version = "\(.*\)"$/\1/p' sango.version.toml)"
           if [[ "$version" == *"-beta-"* ]]; then
             channel="beta"
+          elif [[ "$version" == *"-"* ]]; then
+            channel="prerelease"
           else
             channel="stable"
           fi

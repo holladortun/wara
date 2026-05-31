@@ -159,6 +159,12 @@ Run `make help` from the repository root to see common commands for Docker
 Compose, Rust, Angular, version checks, formatting, linting, builds, and local
 validation.
 
+Focused validation targets are available for separately tracked components:
+
+- `make cli-validate`
+- `make mcp-validate`
+- `make docs-validate`
+
 ## API Usage
 
 Swagger is available at `/docs` when `SANGO_DOCS_ENABLED=true`. Public API routes
@@ -184,12 +190,23 @@ item end to end, including tests and documentation updates where relevant.
 
 ## Versioning
 
-Sango uses one monorepo-wide product version in
-[sango.version.toml](./sango.version.toml). Stable releases are tagged from
-`main` as `vMAJOR.MINOR.PATCH`. Development prereleases are tagged from `dev` as
-`vMAJOR.MINOR.PATCH-beta-N`.
+Sango uses separate versions for independently released components:
 
-Git tags trigger Docker image publishing to GitHub Container Registry.
+- Core platform images use [sango.version.toml](./sango.version.toml), and the
+  backend/frontend package versions must match it.
+- CLI versions live in [cli/Cargo.toml](./cli/Cargo.toml).
+- MCP server versions live in [mcp/Cargo.toml](./mcp/Cargo.toml).
+- Documentation site versions live in [docs/package.json](./docs/package.json).
+
+Core platform releases use `vMAJOR.MINOR.PATCH` tags. Independent components use
+namespaced tags such as `cli-vMAJOR.MINOR.PATCH`,
+`mcp-vMAJOR.MINOR.PATCH`, and `docs-vMAJOR.MINOR.PATCH`.
+
+Beta versions use `MAJOR.MINOR.PATCH-beta-N` and are allowed only on `dev`.
+Stable and other prerelease types can be used on both `main` and `dev`.
+
+Core platform version tags trigger Docker image publishing to GitHub Container
+Registry.
 
 ## License
 
