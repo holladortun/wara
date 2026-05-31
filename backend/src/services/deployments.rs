@@ -80,7 +80,7 @@ impl DeploymentService {
         let service = AppServiceService::new(self.db.clone())
             .get_service(service_id)
             .await?;
-        self.create_deployment(service_id, format!("docker restart sango-{}", service.name))
+        self.create_deployment(service_id, format!("docker restart wara-{}", service.name))
             .await
     }
 

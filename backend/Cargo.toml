@@ -1,12 +1,12 @@
 [package]
-name = "sango-backend"
+name = "wara-backend"
 version = "0.1.0"
 edition = "2024"
 license = "Apache-2.0"
 rust-version = "1.95"
 
 [[bin]]
-name = "sango-backend"
+name = "wara-backend"
 path = "src/main.rs"
 
 [[bin]]

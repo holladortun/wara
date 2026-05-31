@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name sango.local;
+    server_name wara.local;
 
     location /api/ {
         proxy_pass http://backend:8080;

@@ -1,13 +1,13 @@
-# Sango MCP Server
+# Wara MCP Server
 
-The Sango MCP server is the planned Rust Model Context Protocol server for
-letting local AI agents interact with Sango safely. It should expose controlled
-platform operations through Sango APIs rather than raw shell, raw SSH, Docker
+The Wara MCP server is the planned Rust Model Context Protocol server for
+letting local AI agents interact with Wara safely. It should expose controlled
+platform operations through Wara APIs rather than raw shell, raw SSH, Docker
 socket proxying, or direct database access.
 
 Expected responsibilities:
 
-- Authenticate against a Sango instance.
+- Authenticate against a Wara instance.
 - Expose safe deploy, restart, log, project, service, and environment tools.
 - Keep secret values redacted.
 - Return actionable errors for agents.

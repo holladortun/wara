@@ -18,7 +18,7 @@ on:
       - "rust-toolchain.toml"
       - "docker-compose.yml"
       - ".env.example"
-      - "sango.version.toml"
+      - "wara.version.toml"
       - "scripts/check-version.sh"
 
 permissions:
@@ -115,7 +115,7 @@ jobs:
               - "temporal/**"
               - "observability/**"
             core_version:
-              - "sango.version.toml"
+              - "wara.version.toml"
               - "backend/Cargo.toml"
               - "frontend/package.json"
               - "frontend/package-lock.json"
@@ -147,20 +147,20 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: sango
-          POSTGRES_PASSWORD: sango
-          POSTGRES_DB: sango_ci
+          POSTGRES_USER: wara
+          POSTGRES_PASSWORD: wara
+          POSTGRES_DB: wara_ci
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U sango -d sango_ci"
+          --health-cmd "pg_isready -U wara -d wara_ci"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 30
     env:
-      DATABASE_URL: postgres://sango:sango@localhost:5432/sango_ci
-      SANGO_TEST_DATABASE_URL: postgres://sango:sango@localhost:5432/sango_ci
-      SANGO_DB_PUSH_SCHEMA: "true"
+      DATABASE_URL: postgres://wara:wara@localhost:5432/wara_ci
+      WARA_TEST_DATABASE_URL: postgres://wara:wara@localhost:5432/wara_ci
+      WARA_DB_PUSH_SCHEMA: "true"
     steps:
       - uses: actions/checkout@v4
       - name: Show Rust toolchain

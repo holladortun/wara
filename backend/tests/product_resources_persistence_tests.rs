@@ -1,4 +1,5 @@
-use sango_backend::{
+use uuid::Uuid;
+use wara_backend::{
     libs::{
         config::Config,
         db,
@@ -16,12 +17,11 @@ use sango_backend::{
         templates::SecretCopyMode,
     },
 };
-use uuid::Uuid;
 
 #[tokio::test]
 async fn product_resources_persist_with_toasty() {
     let Some(database_url) = Config::from_env().test_database_url else {
-        eprintln!("skipping Toasty integration test; set SANGO_TEST_DATABASE_URL to run it");
+        eprintln!("skipping Toasty integration test; set WARA_TEST_DATABASE_URL to run it");
         return;
     };
 
@@ -29,7 +29,7 @@ async fn product_resources_persist_with_toasty() {
     let mut config = Config::from_env();
     config.database_url = test_database_url.clone();
     config.secret_key = "test-secret-key".to_string();
-    config.remote_services_root = "/srv/sango/apps".to_string();
+    config.remote_services_root = "/srv/wara/apps".to_string();
     config.dockerfile_context_dir = "source".to_string();
 
     let database = db::connect(&config).await.expect("connect test database");
@@ -113,7 +113,7 @@ async fn product_resources_persist_with_toasty() {
         .trigger_deploy(service.id)
         .await
         .expect("trigger deploy");
-    assert!(deployment.output.contains("/srv/sango/apps/web/source"));
+    assert!(deployment.output.contains("/srv/wara/apps/web/source"));
     assert_eq!(
         deployment_service
             .list_deployments(service.id)
@@ -145,7 +145,7 @@ async fn product_resources_persist_with_toasty() {
 }
 
 async fn create_isolated_database(base_url: &str) -> String {
-    let db_name = format!("sango_test_{}", Uuid::now_v7().simple());
+    let db_name = format!("wara_test_{}", Uuid::now_v7().simple());
     let admin_url = replace_database_name(base_url, "postgres");
     let (client, connection) = tokio_postgres::connect(&admin_url, tokio_postgres::NoTls)
         .await

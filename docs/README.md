@@ -1,12 +1,12 @@
-# Sango Docs
+# Wara Docs
 
-This directory contains Sango documentation assets, specs, and configuration
+This directory contains Wara documentation assets, specs, and configuration
 examples. It will also host the future documentation website.
 
 Current contents include:
 
 - CLI/MCP product spec.
-- Example Sango config file.
+- Example Wara config file.
 - Docs package metadata for independent documentation-site versioning.
 
 ## Local Development

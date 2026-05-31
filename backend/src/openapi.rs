@@ -80,7 +80,7 @@ use utoipa::OpenApi;
         )
     ),
     tags(
-        (name = "sango", description = "Safe Sango platform APIs")
+        (name = "wara", description = "Safe Wara platform APIs")
     ),
     modifiers(&SecurityAddon)
 )]

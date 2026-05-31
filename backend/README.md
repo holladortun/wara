@@ -1,6 +1,6 @@
-# Sango Backend
+# Wara Backend
 
-The backend is the Rust Axum API for Sango. It owns authenticated platform APIs,
+The backend is the Rust Axum API for Wara. It owns authenticated platform APIs,
 RBAC boundaries, Toasty/PostgreSQL persistence, Utoipa OpenAPI docs, platform
 telemetry, and the Temporal worker binary used for deploy/restart/background
 jobs.
@@ -41,7 +41,7 @@ independently from the frontend and core Docker images.
 
 To release a new core platform version:
 
-1. Update `sango.version.toml` in the repository root.
+1. Update `wara.version.toml` in the repository root.
 2. Update `backend/Cargo.toml` to the same version.
 3. Update `frontend/package.json` and `frontend/package-lock.json` to the same
    version.

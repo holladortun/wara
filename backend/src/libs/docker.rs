@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-pub const DEFAULT_REMOTE_SERVICES_ROOT: &str = "/opt/sango/services";
+pub const DEFAULT_REMOTE_SERVICES_ROOT: &str = "/opt/wara/services";
 pub const DEFAULT_DOCKERFILE_CONTEXT_DIR: &str = "context";
-pub const DEFAULT_CONTAINER_NAME_PREFIX: &str = "sango-";
-pub const DEFAULT_BUILT_IMAGE_PREFIX: &str = "sango";
+pub const DEFAULT_CONTAINER_NAME_PREFIX: &str = "wara-";
+pub const DEFAULT_BUILT_IMAGE_PREFIX: &str = "wara";
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -133,7 +133,7 @@ mod tests {
 
     fn command_config() -> DockerCommandConfig {
         DockerCommandConfig::new(
-            "/srv/sango/services/".to_string(),
+            "/srv/wara/services/".to_string(),
             "/build-context/".to_string(),
         )
     }
@@ -143,8 +143,8 @@ mod tests {
         assert_eq!(
             compose_deploy_commands("api", &command_config()),
             vec![
-                "mkdir -p /srv/sango/services/api",
-                "cd /srv/sango/services/api && docker compose up -d",
+                "mkdir -p /srv/wara/services/api",
+                "cd /srv/wara/services/api && docker compose up -d",
             ]
         );
     }
@@ -154,9 +154,9 @@ mod tests {
         assert_eq!(
             dockerfile_deploy_commands("worker", &command_config()),
             vec![
-                "docker build -t sango/worker:latest /srv/sango/services/worker/build-context",
-                "docker rm -f sango-worker || true",
-                "docker run -d --name sango-worker --restart unless-stopped sango/worker:latest",
+                "docker build -t wara/worker:latest /srv/wara/services/worker/build-context",
+                "docker rm -f wara-worker || true",
+                "docker run -d --name wara-worker --restart unless-stopped wara/worker:latest",
             ]
         );
     }

@@ -140,91 +140,91 @@ impl Config {
             app_env,
             config_file: config_path(),
             bind_addr: setting("BIND_ADDR", file.bind_addr, "0.0.0.0:8080".to_string()),
-            postgres_user: setting("POSTGRES_USER", file.postgres_user, "sango".to_string()),
+            postgres_user: setting("POSTGRES_USER", file.postgres_user, "wara".to_string()),
             postgres_password: setting(
                 "POSTGRES_PASSWORD",
                 file.postgres_password,
-                "sango".to_string(),
+                "wara".to_string(),
             ),
-            postgres_db: setting("POSTGRES_DB", file.postgres_db, "sango".to_string()),
+            postgres_db: setting("POSTGRES_DB", file.postgres_db, "wara".to_string()),
             postgres_port: u16_setting("POSTGRES_PORT", file.postgres_port, 5432),
             database_url: setting(
                 "DATABASE_URL",
                 file.database_url,
-                "postgres://sango:sango@localhost:5432/sango".to_string(),
+                "postgres://wara:wara@localhost:5432/wara".to_string(),
             ),
             secret_key: setting(
-                "SANGO_SECRET_KEY",
+                "WARA_SECRET_KEY",
                 file.secret_key,
                 "development-secret-change-me".to_string(),
             ),
-            db_push_schema: bool_setting("SANGO_DB_PUSH_SCHEMA", file.db_push_schema, true),
-            docs_enabled: bool_setting("SANGO_DOCS_ENABLED", file.docs_enabled, true),
+            db_push_schema: bool_setting("WARA_DB_PUSH_SCHEMA", file.db_push_schema, true),
+            docs_enabled: bool_setting("WARA_DOCS_ENABLED", file.docs_enabled, true),
             remote_services_root: setting(
-                "SANGO_REMOTE_SERVICES_ROOT",
+                "WARA_REMOTE_SERVICES_ROOT",
                 file.remote_services_root,
                 DEFAULT_REMOTE_SERVICES_ROOT.to_string(),
             ),
             dockerfile_context_dir: setting(
-                "SANGO_DOCKERFILE_CONTEXT_DIR",
+                "WARA_DOCKERFILE_CONTEXT_DIR",
                 file.dockerfile_context_dir,
                 DEFAULT_DOCKERFILE_CONTEXT_DIR.to_string(),
             ),
             jwt_private_key_pem: setting(
-                "SANGO_JWT_PRIVATE_KEY_PEM",
+                "WARA_JWT_PRIVATE_KEY_PEM",
                 file.jwt_private_key_pem,
                 DEFAULT_JWT_PRIVATE_KEY_PEM.to_string(),
             ),
             jwt_public_key_pem: setting(
-                "SANGO_JWT_PUBLIC_KEY_PEM",
+                "WARA_JWT_PUBLIC_KEY_PEM",
                 file.jwt_public_key_pem,
                 DEFAULT_JWT_PUBLIC_KEY_PEM.to_string(),
             ),
-            jwt_issuer: setting("SANGO_JWT_ISSUER", file.jwt_issuer, "sango".to_string()),
+            jwt_issuer: setting("WARA_JWT_ISSUER", file.jwt_issuer, "wara".to_string()),
             jwt_audience: setting(
-                "SANGO_JWT_AUDIENCE",
+                "WARA_JWT_AUDIENCE",
                 file.jwt_audience,
-                "sango-api".to_string(),
+                "wara-api".to_string(),
             ),
             jwt_access_token_ttl_seconds: u64_setting(
-                "SANGO_JWT_ACCESS_TOKEN_TTL_SECONDS",
+                "WARA_JWT_ACCESS_TOKEN_TTL_SECONDS",
                 file.jwt_access_token_ttl_seconds,
                 900,
             ),
             app_base_url: setting(
-                "SANGO_APP_BASE_URL",
+                "WARA_APP_BASE_URL",
                 file.app_base_url,
                 "http://localhost:4200".to_string(),
             ),
             invite_token_ttl_seconds: u64_setting(
-                "SANGO_INVITE_TOKEN_TTL_SECONDS",
+                "WARA_INVITE_TOKEN_TTL_SECONDS",
                 file.invite_token_ttl_seconds,
                 604800,
             ),
             bootstrap_admin_email: setting(
-                "SANGO_BOOTSTRAP_ADMIN_EMAIL",
+                "WARA_BOOTSTRAP_ADMIN_EMAIL",
                 file.bootstrap_admin_email,
-                "admin@sango.local".to_string(),
+                "admin@wara.local".to_string(),
             ),
             bootstrap_admin_password: setting(
-                "SANGO_BOOTSTRAP_ADMIN_PASSWORD",
+                "WARA_BOOTSTRAP_ADMIN_PASSWORD",
                 file.bootstrap_admin_password,
                 "change-me".to_string(),
             ),
             bootstrap_admin_name: setting(
-                "SANGO_BOOTSTRAP_ADMIN_NAME",
+                "WARA_BOOTSTRAP_ADMIN_NAME",
                 file.bootstrap_admin_name,
-                "Sango Admin".to_string(),
+                "Wara Admin".to_string(),
             ),
             telemetry_enabled: bool_setting(
-                "SANGO_TELEMETRY_ENABLED",
+                "WARA_TELEMETRY_ENABLED",
                 file.telemetry_enabled,
                 false,
             ),
             otel_service_name: setting(
                 "OTEL_SERVICE_NAME",
                 file.otel_service_name,
-                "sango-backend".to_string(),
+                "wara-backend".to_string(),
             ),
             otel_exporter_otlp_endpoint: optional_setting(
                 "OTEL_EXPORTER_OTLP_ENDPOINT",
@@ -314,7 +314,7 @@ impl Config {
                 file.grafana_admin_password,
                 "admin".to_string(),
             ),
-            test_database_url: optional_setting("SANGO_TEST_DATABASE_URL", file.test_database_url),
+            test_database_url: optional_setting("WARA_TEST_DATABASE_URL", file.test_database_url),
         }
     }
 }
@@ -388,7 +388,7 @@ impl ConfigFile {
 }
 
 fn config_path() -> Option<PathBuf> {
-    std::env::var_os("SANGO_CONFIG_FILE")
+    std::env::var_os("WARA_CONFIG_FILE")
         .map(PathBuf::from)
         .or_else(default_config_path)
 }
@@ -396,7 +396,7 @@ fn config_path() -> Option<PathBuf> {
 fn default_config_path() -> Option<PathBuf> {
     std::env::var_os("HOME")
         .map(PathBuf::from)
-        .map(|home| home.join(".sango").join("config.yml"))
+        .map(|home| home.join(".wara").join("config.yml"))
 }
 
 fn setting(env_name: &str, file_value: Option<String>, default: String) -> String {
@@ -452,19 +452,19 @@ mod tests {
             bind_addr: Some("127.0.0.1:9000".to_string()),
             database_url: Some("postgres://file".to_string()),
             telemetry_enabled: Some(true),
-            remote_services_root: Some("/srv/sango/apps".to_string()),
+            remote_services_root: Some("/srv/wara/apps".to_string()),
             dockerfile_context_dir: Some("src".to_string()),
-            temporal_namespace: Some("sango".to_string()),
+            temporal_namespace: Some("wara".to_string()),
             ..ConfigFile::default()
         });
 
         assert_eq!(config.bind_addr, "127.0.0.1:9000");
         assert_eq!(config.database_url, "postgres://file");
         assert!(config.telemetry_enabled);
-        assert_eq!(config.remote_services_root, "/srv/sango/apps");
+        assert_eq!(config.remote_services_root, "/srv/wara/apps");
         assert_eq!(config.dockerfile_context_dir, "src");
-        assert_eq!(config.temporal_namespace, "sango");
-        assert_eq!(config.otel_service_name, "sango-backend");
+        assert_eq!(config.temporal_namespace, "wara");
+        assert_eq!(config.otel_service_name, "wara-backend");
     }
 
     #[test]
@@ -476,15 +476,15 @@ mod tests {
     }
 
     #[test]
-    fn default_path_uses_home_sango_config() {
+    fn default_path_uses_home_wara_config() {
         let original = std::env::var_os("HOME");
         unsafe {
-            std::env::set_var("HOME", "/tmp/sango-home");
+            std::env::set_var("HOME", "/tmp/wara-home");
         }
 
         assert_eq!(
             default_config_path().unwrap(),
-            PathBuf::from("/tmp/sango-home/.sango/config.yml")
+            PathBuf::from("/tmp/wara-home/.wara/config.yml")
         );
 
         unsafe {

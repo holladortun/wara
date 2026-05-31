@@ -33,7 +33,7 @@ jobs:
       - name: Read version and channel
         id: version
         run: |
-          version="$(sed -n 's/^version = "\(.*\)"$/\1/p' sango.version.toml)"
+          version="$(sed -n 's/^version = "\(.*\)"$/\1/p' wara.version.toml)"
           if [[ "$version" == *"-beta-"* ]]; then
             channel="beta"
           elif [[ "$version" == *"-"* ]]; then
@@ -53,15 +53,15 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - name: sango-backend
+          - name: wara-backend
             context: ./backend
             file: ./backend/Dockerfile
             target: ""
-          - name: sango-frontend
+          - name: wara-frontend
             context: ./frontend
             file: ./frontend/Dockerfile
             target: ""
-          - name: sango-temporal
+          - name: wara-temporal
             context: ./temporal
             file: ./temporal/Dockerfile
             target: prod

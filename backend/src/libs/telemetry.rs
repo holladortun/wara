@@ -23,10 +23,10 @@ pub fn init(config: &Config) -> anyhow::Result<TelemetryGuard> {
         tracing::info!(
             service = %config.otel_service_name,
             endpoint = ?config.otel_exporter_otlp_endpoint,
-            "Sango platform telemetry enabled"
+            "Wara platform telemetry enabled"
         );
     } else {
-        tracing::info!("Sango platform telemetry disabled");
+        tracing::info!("Wara platform telemetry disabled");
     }
 
     Ok(TelemetryGuard {

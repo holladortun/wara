@@ -1,14 +1,14 @@
 use std::net::SocketAddr;
 
-use sango_backend::{
+use tokio::net::TcpListener;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use tracing::info;
+use wara_backend::{
     libs::{config::Config, db, telemetry},
     routes,
     services::auth::AuthService,
     state::AppState,
 };
-use tokio::net::TcpListener;
-use tower_http::{cors::CorsLayer, trace::TraceLayer};
-use tracing::info;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -26,7 +26,7 @@ async fn main() -> anyhow::Result<()> {
 
     let addr: SocketAddr = config.bind_addr.parse()?;
     let listener = TcpListener::bind(addr).await?;
-    info!(%addr, "Sango backend listening");
+    info!(%addr, "Wara backend listening");
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())

@@ -9,7 +9,7 @@ QUEUE ?= default
 
 .PHONY: help
 help: ## Show available make targets.
-	@awk 'BEGIN {FS = ":.*## "; printf "\nSango commands:\n\n"} /^[a-zA-Z0-9_.-]+:.*## / {printf "  %-24s %s\n", $$1, $$2} END {printf "\n"}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*## "; printf "\nWara commands:\n\n"} /^[a-zA-Z0-9_.-]+:.*## / {printf "  %-24s %s\n", $$1, $$2} END {printf "\n"}' $(MAKEFILE_LIST)
 
 .PHONY: setup
 setup: frontend-install ## Install local development dependencies.
@@ -45,11 +45,11 @@ compose-config: ## Validate the root Docker Compose config.
 
 .PHONY: backend-run
 backend-run: ## Run the backend API locally.
-	cargo run -p sango-backend
+	cargo run -p wara-backend
 
 .PHONY: backend-worker
 backend-worker: ## Run a Temporal worker locally. Override with QUEUE=high.
-	cargo run -p sango-backend --bin temporal_worker -- $(QUEUE)
+	cargo run -p wara-backend --bin temporal_worker -- $(QUEUE)
 
 .PHONY: backend-fmt
 backend-fmt: ## Format Rust code.

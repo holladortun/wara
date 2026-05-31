@@ -1,4 +1,4 @@
-use sango_backend::{
+use wara_backend::{
     libs::{config::Config, telemetry},
     services::queues::QueueName,
 };
@@ -17,7 +17,7 @@ async fn main() -> anyhow::Result<()> {
         task_queue = %queue.as_task_queue(),
         temporal_address = %config.temporal_address,
         namespace = %config.temporal_namespace,
-        "Sango Temporal worker scaffold started"
+        "Wara Temporal worker scaffold started"
     );
     telemetry::shutdown(guard)?;
     Ok(())

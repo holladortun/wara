@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "sango-cli"
+name = "wara-cli"
 version = "0.1.0"

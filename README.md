@@ -1,6 +1,6 @@
-# Sango
+# Wara
 
-Sango is a self-hosted, Docker-native application platform for running apps on
+Wara is a self-hosted, Docker-native application platform for running apps on
 your own servers. The goal is to provide a practical Coolify/Heroku/Render-style
 experience where users can connect Docker hosts, create projects and
 environments, attach Docker credentials and env vars, deploy Docker images,
@@ -12,9 +12,9 @@ Rust with Axum, Toasty, PostgreSQL, Utoipa OpenAPI, Temporal workflow scaffoldin
 and opt-in platform-only telemetry. The frontend is Angular with ZardUI and
 Tailwind.
 
-## What Sango Is Aiming For
+## What Wara Is Aiming For
 
-Sango should become a self-hosted platform that can:
+Wara should become a self-hosted platform that can:
 
 - Manage one or more Docker servers over SSH.
 - Run Docker image, Docker Compose, and Dockerfile based services.
@@ -23,7 +23,7 @@ Sango should become a self-hosted platform that can:
 - Use Temporal for deploy, restart, proxy, log collection, and template jobs.
 - Expose safe, documented APIs for automation.
 - Offer an agent-friendly Rust CLI and Rust MCP server for local deploy flows.
-- Provide opt-in OpenTelemetry for Sango platform internals only, never hosted
+- Provide opt-in OpenTelemetry for Wara platform internals only, never hosted
   application telemetry.
 - Keep secrets encrypted or hashed at rest and redacted in public responses.
 
@@ -66,9 +66,9 @@ See [ROADMAP.md](./ROADMAP.md) for the next implementation slices.
 
 ## Configuration
 
-Sango reads configuration from environment variables and from
-`~/.sango/config.yml`. The config file path can be overridden with
-`SANGO_CONFIG_FILE`.
+Wara reads configuration from environment variables and from
+`~/.wara/config.yml`. The config file path can be overridden with
+`WARA_CONFIG_FILE`.
 
 Environment variables override config file values. See:
 
@@ -77,7 +77,7 @@ Environment variables override config file values. See:
 
 For development, the default bootstrapped admin is:
 
-- Email: `admin@sango.local`
+- Email: `admin@wara.local`
 - Password: `change-me`
 
 Override this before using a shared or exposed environment.
@@ -122,7 +122,7 @@ Run tests:
 make backend-test
 ```
 
-Integration tests use `SANGO_TEST_DATABASE_URL`. The default in `.env.example`
+Integration tests use `WARA_TEST_DATABASE_URL`. The default in `.env.example`
 points at the local compose database.
 
 ## Run Frontend Locally
@@ -167,7 +167,7 @@ Focused validation targets are available for separately tracked components:
 
 ## API Usage
 
-Swagger is available at `/docs` when `SANGO_DOCS_ENABLED=true`. Public API routes
+Swagger is available at `/docs` when `WARA_DOCS_ENABLED=true`. Public API routes
 are versioned under `/api/v1`.
 
 Current auth flow:
@@ -190,9 +190,9 @@ item end to end, including tests and documentation updates where relevant.
 
 ## Versioning
 
-Sango uses separate versions for independently released components:
+Wara uses separate versions for independently released components:
 
-- Core platform images use [sango.version.toml](./sango.version.toml), and the
+- Core platform images use [wara.version.toml](./wara.version.toml), and the
   backend/frontend package versions must match it.
 - CLI versions live in [cli/Cargo.toml](./cli/Cargo.toml).
 - MCP server versions live in [mcp/Cargo.toml](./mcp/Cargo.toml).
@@ -210,4 +210,4 @@ Registry.
 
 ## License
 
-Sango is licensed under the [Apache License 2.0](./LICENSE).
+Wara is licensed under the [Apache License 2.0](./LICENSE).

@@ -14,7 +14,7 @@ services:
       start_period: 30s
 
   temporal:
-    image: sango-temporal:dev
+    image: wara-temporal:dev
     build:
       context: .
       dockerfile: Dockerfile

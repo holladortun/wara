@@ -21,12 +21,12 @@ terminate() {
 
 trap terminate INT TERM HUP
 
-/opt/sango-temporal/scripts/setup-postgres.sh
+/opt/wara-temporal/scripts/setup-postgres.sh
 
 /etc/temporal/entrypoint.sh &
 server_pid=$!
 
-if ! /opt/sango-temporal/scripts/create-namespace.sh; then
+if ! /opt/wara-temporal/scripts/create-namespace.sh; then
   terminate
   exit 1
 fi

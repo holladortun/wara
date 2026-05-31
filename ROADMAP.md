@@ -1,4 +1,4 @@
-# Sango Roadmap
+# Wara Roadmap
 
 This roadmap is organized for external contributors. Each item should be small
 enough for one pull request and complete enough to be independently reviewed.
@@ -25,7 +25,7 @@ Implement a migration workflow instead of relying only on `db.push_schema()`.
 Done when:
 
 - There is a repeatable migration command for local and production use.
-- Fresh databases can be initialized without `SANGO_DB_PUSH_SCHEMA=true`.
+- Fresh databases can be initialized without `WARA_DB_PUSH_SCHEMA=true`.
 - Existing development databases can be upgraded without data loss.
 - README documents migration commands.
 - CI can run migrations before tests.
@@ -274,13 +274,13 @@ Done when:
 Status: open
 
 Implement the agent-friendly CLI described in
-`docs/sango-cli-mcp-spec.md`.
+`docs/wara-cli-mcp-spec.md`.
 
 Done when:
 
-- `sango --tree` prints all commands and subcommands.
+- `wara --tree` prints all commands and subcommands.
 - All interactive inputs are also available as args or flags.
-- `sango api` can call safe API endpoints directly.
+- `wara api` can call safe API endpoints directly.
 - Errors include actionable next steps.
 - CLI auth supports JWT and API token modes.
 
@@ -288,7 +288,7 @@ Done when:
 
 Status: open
 
-Expose safe Sango operations to local agents.
+Expose safe Wara operations to local agents.
 
 Done when:
 
@@ -400,7 +400,7 @@ Done when:
 
 - Admins can enable/disable telemetry.
 - Endpoint and service name can be configured.
-- UI clearly states telemetry covers Sango only.
+- UI clearly states telemetry covers Wara only.
 - Tests cover form validation.
 
 ## Observability And Security

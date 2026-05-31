@@ -1,4 +1,4 @@
-# Contributing To Sango
+# Contributing To Wara
 
 Thanks for considering a contribution.
 
@@ -44,13 +44,13 @@ approach. Small roadmap items can be implemented directly.
 
 ## Version Updates
 
-Sango does not use one version for the whole monorepo. Components that can
+Wara does not use one version for the whole monorepo. Components that can
 evolve separately own their own versions.
 
 When changing the core platform version, update all of these files in the same
 PR:
 
-- `sango.version.toml`
+- `wara.version.toml`
 - `backend/Cargo.toml`
 - `frontend/package.json`
 - `frontend/package-lock.json`

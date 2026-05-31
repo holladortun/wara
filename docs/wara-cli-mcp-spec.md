@@ -2,16 +2,16 @@
 
 ## Summary
 
-Extend Sango with a Rust API client library, Rust CLI, and Rust MCP server. The CLI must be agent-friendly: every operation is fully controllable with flags/args, supports machine-readable output, has clear progress reporting, includes a `--tree` command overview, exposes direct API access, and returns friendly actionable errors.
+Extend Wara with a Rust API client library, Rust CLI, and Rust MCP server. The CLI must be agent-friendly: every operation is fully controllable with flags/args, supports machine-readable output, has clear progress reporting, includes a `--tree` command overview, exposes direct API access, and returns friendly actionable errors.
 
 The MCP server supports both `stdio` and Streamable HTTP per the 2025-06-18 MCP transport spec.
 
 ## Key Changes
 
 - Add workspace crates:
-  - `crates/sango-api-client`: shared typed HTTP client for safe `/api/v1` APIs, bearer API-token auth, and consistent error mapping.
-  - `crates/sango-cli`: `sango` binary built with `clap`, using the shared client.
-  - `crates/sango-mcp`: MCP server binary using `rmcp`.
+  - `crates/wara-api-client`: shared typed HTTP client for safe `/api/v1` APIs, bearer API-token auth, and consistent error mapping.
+  - `crates/wara-cli`: `wara` binary built with `clap`, using the shared client.
+  - `crates/wara-mcp`: MCP server binary using `rmcp`.
 - Add backend support:
   - Scoped API token CRUD with redacted token display after creation.
   - Artifact upload for local Compose/Dockerfile directories.
@@ -22,8 +22,8 @@ The MCP server supports both `stdio` and Streamable HTTP per the 2025-06-18 MCP 
   - Add `--no-interactive` to fail fast if required input is missing.
   - Add `--output text|json|ndjson`, with `text` default.
   - Add `--quiet`, `--verbose`, `--trace-id`, `--timeout`, and `--wait/--no-wait`.
-  - Add `sango --tree` to print the full command/subcommand tree in one call.
-  - Add `sango api METHOD PATH [--body JSON|--body-file FILE] [--query key=value]` for direct safe API calls.
+  - Add `wara --tree` to print the full command/subcommand tree in one call.
+  - Add `wara api METHOD PATH [--body JSON|--body-file FILE] [--query key=value]` for direct safe API calls.
   - Progress output must use plain line-oriented output in non-TTY/agent mode, not spinner-only UI.
   - TTY mode may use nicer progress, but must never require select boxes or stdin prompts.
 - MCP behavior:
@@ -34,28 +34,28 @@ The MCP server supports both `stdio` and Streamable HTTP per the 2025-06-18 MCP 
 
 ## CLI Commands
 
-- `sango auth token set --url URL --token TOKEN`
-- `sango auth token create --name NAME --scopes ...`
-- `sango projects list|get|create`
-- `sango services list|get|create`
-- `sango deploy --project ... --environment ... --service ... --image ...`
-- `sango deploy --project ... --environment ... --service ... --path ...`
-- `sango deploy status DEPLOYMENT_ID`
-- `sango logs --service ... [--follow]`
-- `sango restart --service ...`
-- `sango proxy preview --domain ...`
-- `sango api GET /api/v1/projects`
+- `wara auth token set --url URL --token TOKEN`
+- `wara auth token create --name NAME --scopes ...`
+- `wara projects list|get|create`
+- `wara services list|get|create`
+- `wara deploy --project ... --environment ... --service ... --image ...`
+- `wara deploy --project ... --environment ... --service ... --path ...`
+- `wara deploy status DEPLOYMENT_ID`
+- `wara logs --service ... [--follow]`
+- `wara restart --service ...`
+- `wara proxy preview --domain ...`
+- `wara api GET /api/v1/projects`
 
 ## Agent-Friendly Interfaces
 
 Examples:
 
 ```bash
-sango --tree
-sango projects list --output json --no-interactive
-sango deploy --project api --environment production --service web --image ghcr.io/acme/web:latest --wait --output ndjson
-sango deploy --project api --environment production --service web --path . --no-interactive --output json
-sango api POST /api/v1/services/svc_123/deployments --body '{}' --output json
+wara --tree
+wara projects list --output json --no-interactive
+wara deploy --project api --environment production --service web --image ghcr.io/acme/web:latest --wait --output ndjson
+wara deploy --project api --environment production --service web --path . --no-interactive --output json
+wara api POST /api/v1/services/svc_123/deployments --body '{}' --output json
 ```
 
 Progress output:
@@ -80,14 +80,14 @@ Error behavior:
 
 ## MCP Tools
 
-- `sango_list_projects`
-- `sango_list_services`
-- `sango_deploy_image`
-- `sango_deploy_local_artifact`
-- `sango_get_deployment`
-- `sango_get_logs`
-- `sango_restart_service`
-- `sango_preview_proxy_config`
+- `wara_list_projects`
+- `wara_list_services`
+- `wara_deploy_image`
+- `wara_deploy_local_artifact`
+- `wara_get_deployment`
+- `wara_get_logs`
+- `wara_restart_service`
+- `wara_preview_proxy_config`
 
 ## Safety Requirements
 
@@ -115,11 +115,11 @@ Backend:
 
 CLI:
 
-- Snapshot test for `sango --tree`.
+- Snapshot test for `wara --tree`.
 - Arg-only tests for every command with `--no-interactive`.
 - JSON and NDJSON output tests.
 - Friendly error tests for missing config, auth failure, not found, timeout, and invalid artifact path.
-- `sango api` tests for GET, POST, body, and query handling.
+- `wara api` tests for GET, POST, body, and query handling.
 
 MCP:
 

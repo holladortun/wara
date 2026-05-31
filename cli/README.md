@@ -1,7 +1,7 @@
-# Sango CLI
+# Wara CLI
 
-The Sango CLI is the planned Rust command-line client for deploying and managing
-Sango resources from a local environment. It will talk to the Sango public API
+The Wara CLI is the planned Rust command-line client for deploying and managing
+Wara resources from a local environment. It will talk to the Wara public API
 instead of bypassing platform safety controls.
 
 The CLI should stay agent-friendly:

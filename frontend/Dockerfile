@@ -6,5 +6,5 @@ COPY . .
 RUN npm run build
 
 FROM nginx:1.27-alpine
-COPY --from=builder /app/dist/sango-frontend/browser /usr/share/nginx/html
+COPY --from=builder /app/dist/wara-frontend/browser /usr/share/nginx/html
 

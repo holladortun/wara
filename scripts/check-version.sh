@@ -60,19 +60,19 @@ check_beta_allowed() {
   fi
 }
 
-version="$(sed -n 's/^version = "\(.*\)"$/\1/p' sango.version.toml)"
+version="$(sed -n 's/^version = "\(.*\)"$/\1/p' wara.version.toml)"
 
 if [[ -z "$version" ]]; then
-  echo "Could not read version from sango.version.toml" >&2
+  echo "Could not read version from wara.version.toml" >&2
   exit 1
 fi
 
-check_semver "Sango core" "$version"
+check_semver "Wara core" "$version"
 
 branch="$(current_branch)"
 
 if [[ -n "$branch" ]]; then
-  check_beta_allowed "Sango core" "$version" "$branch"
+  check_beta_allowed "Wara core" "$version" "$branch"
 fi
 
 backend_version="$(read_toml_version backend/Cargo.toml)"
@@ -164,4 +164,4 @@ if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
   fi
 fi
 
-echo "Sango core version $version is consistent."
+echo "Wara core version $version is consistent."

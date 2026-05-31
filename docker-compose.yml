@@ -1,4 +1,4 @@
-name: sango
+name: wara
 include:
   - temporal/docker-compose.yml
   - observability/docker-compose.yml
@@ -7,15 +7,15 @@ services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-sango}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sango}
-      POSTGRES_DB: ${POSTGRES_DB:-sango}
+      POSTGRES_USER: ${POSTGRES_USER:-wara}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wara}
+      POSTGRES_DB: ${POSTGRES_DB:-wara}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sango}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-wara}"]
       interval: 5s
       timeout: 5s
       retries: 30
@@ -24,12 +24,12 @@ services:
     build:
       context: ./backend
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-sango}:${POSTGRES_PASSWORD:-sango}@postgres:5432/${POSTGRES_DB:-sango}
+      DATABASE_URL: postgres://${POSTGRES_USER:-wara}:${POSTGRES_PASSWORD:-wara}@postgres:5432/${POSTGRES_DB:-wara}
       BIND_ADDR: 0.0.0.0:8080
       TEMPORAL_ADDRESS: temporal:7233
       TEMPORAL_NAMESPACE: default
-      SANGO_SECRET_KEY: ${SANGO_SECRET_KEY:-development-secret-change-me}
-      SANGO_TELEMETRY_ENABLED: ${SANGO_TELEMETRY_ENABLED:-false}
+      WARA_SECRET_KEY: ${WARA_SECRET_KEY:-development-secret-change-me}
+      WARA_TELEMETRY_ENABLED: ${WARA_TELEMETRY_ENABLED:-false}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://jaeger:4317}
     depends_on:
       postgres:
@@ -50,7 +50,7 @@ services:
       context: ./backend
     command: ["temporal_worker", "default"]
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-sango}:${POSTGRES_PASSWORD:-sango}@postgres:5432/${POSTGRES_DB:-sango}
+      DATABASE_URL: postgres://${POSTGRES_USER:-wara}:${POSTGRES_PASSWORD:-wara}@postgres:5432/${POSTGRES_DB:-wara}
       TEMPORAL_ADDRESS: temporal:7233
       TEMPORAL_NAMESPACE: default
     depends_on:

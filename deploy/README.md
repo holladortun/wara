@@ -1,7 +1,7 @@
-# Sango Deploy Assets
+# Wara Deploy Assets
 
 This directory contains deployment examples and runtime configuration assets
-that support self-hosting Sango. These files are examples or templates consumed
+that support self-hosting Wara. These files are examples or templates consumed
 by operators and future installers.
 
 Current contents include an example Nginx configuration.
@@ -21,7 +21,7 @@ independent version.
 
 To release changes here, follow the core platform release process:
 
-1. Update `sango.version.toml`.
+1. Update `wara.version.toml`.
 2. Update backend/frontend versions to match.
 3. Update `CHANGELOG.md`.
 4. Run `make check-version`.

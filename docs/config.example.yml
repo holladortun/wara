@@ -1,6 +1,6 @@
 # Optional local backend configuration.
-# Place this at ~/.sango/config.yml when running Sango outside the Docker
-# deployment, or set SANGO_CONFIG_FILE to point at a different file.
+# Place this at ~/.wara/config.yml when running Wara outside the Docker
+# deployment, or set WARA_CONFIG_FILE to point at a different file.
 # Environment variables override these values.
 
 app_env: development
@@ -10,7 +10,7 @@ frontend_port: 4200
 secret_key: replace-with-a-long-random-secret
 db_push_schema: true
 docs_enabled: true
-remote_services_root: /opt/sango/services
+remote_services_root: /opt/wara/services
 dockerfile_context_dir: context
 jwt_private_key_pem: |
   -----BEGIN RSA PRIVATE KEY-----
@@ -20,23 +20,23 @@ jwt_public_key_pem: |
   -----BEGIN PUBLIC KEY-----
   replace-with-your-public-key
   -----END PUBLIC KEY-----
-jwt_issuer: sango
-jwt_audience: sango-api
+jwt_issuer: wara
+jwt_audience: wara-api
 jwt_access_token_ttl_seconds: 900
 app_base_url: http://localhost:4200
 invite_token_ttl_seconds: 604800
-bootstrap_admin_email: admin@sango.local
+bootstrap_admin_email: admin@wara.local
 bootstrap_admin_password: change-me
-bootstrap_admin_name: Sango Admin
+bootstrap_admin_name: Wara Admin
 
-postgres_user: sango
-postgres_password: sango
-postgres_db: sango
+postgres_user: wara
+postgres_password: wara
+postgres_db: wara
 postgres_port: 5432
-database_url: postgres://sango:sango@localhost:5432/sango
+database_url: postgres://wara:wara@localhost:5432/wara
 
 telemetry_enabled: false
-otel_service_name: sango-backend
+otel_service_name: wara-backend
 otel_exporter_otlp_endpoint: http://localhost:4317
 
 temporal_address: localhost:7233
@@ -64,4 +64,4 @@ grafana_admin_user: admin
 grafana_admin_password: admin
 
 # Tests only
-test_database_url: postgres://sango:sango@localhost:5432/sango
+test_database_url: postgres://wara:wara@localhost:5432/wara

@@ -2,27 +2,27 @@ use axum::{
     body::{Body, to_bytes},
     http::{Request, StatusCode},
 };
-use sango_backend::{
+use serde_json::Value;
+use tower::ServiceExt;
+use uuid::Uuid;
+use wara_backend::{
     libs::{config::Config, db},
     routes,
     services::auth::AuthService,
     state::AppState,
 };
-use serde_json::Value;
-use tower::ServiceExt;
-use uuid::Uuid;
 
 #[tokio::test]
 async fn login_issues_asymmetric_jwt_and_me_verifies_it() {
     let Some(database_url) = Config::from_env().test_database_url else {
-        eprintln!("skipping Toasty integration test; set SANGO_TEST_DATABASE_URL to run it");
+        eprintln!("skipping Toasty integration test; set WARA_TEST_DATABASE_URL to run it");
         return;
     };
 
     let test_database_url = create_isolated_database(&database_url).await;
     let mut config = Config::from_env();
     config.database_url = test_database_url.clone();
-    config.bootstrap_admin_email = "admin-auth@sango.local".to_string();
+    config.bootstrap_admin_email = "admin-auth@wara.local".to_string();
     config.bootstrap_admin_password = "correct-password".to_string();
     config.bootstrap_admin_name = "Auth Admin".to_string();
 
@@ -41,7 +41,7 @@ async fn login_issues_asymmetric_jwt_and_me_verifies_it() {
                 .uri("/api/v1/auth/login")
                 .header("content-type", "application/json")
                 .body(Body::from(
-                    r#"{"email":"admin-auth@sango.local","password":"correct-password"}"#,
+                    r#"{"email":"admin-auth@wara.local","password":"correct-password"}"#,
                 ))
                 .unwrap(),
         )
@@ -65,7 +65,7 @@ async fn login_issues_asymmetric_jwt_and_me_verifies_it() {
         .unwrap();
     assert_eq!(me_response.status(), StatusCode::OK);
     let me_body = response_json(me_response).await;
-    assert_eq!(me_body["email"], "admin-auth@sango.local");
+    assert_eq!(me_body["email"], "admin-auth@wara.local");
 
     let tampered_response = app
         .oneshot(
@@ -85,14 +85,14 @@ async fn login_issues_asymmetric_jwt_and_me_verifies_it() {
 #[tokio::test]
 async fn admin_can_invite_user_and_user_accepts_once() {
     let Some(database_url) = Config::from_env().test_database_url else {
-        eprintln!("skipping Toasty integration test; set SANGO_TEST_DATABASE_URL to run it");
+        eprintln!("skipping Toasty integration test; set WARA_TEST_DATABASE_URL to run it");
         return;
     };
 
     let test_database_url = create_isolated_database(&database_url).await;
     let mut config = Config::from_env();
     config.database_url = test_database_url.clone();
-    config.bootstrap_admin_email = "invite-admin@sango.local".to_string();
+    config.bootstrap_admin_email = "invite-admin@wara.local".to_string();
     config.bootstrap_admin_password = "correct-password".to_string();
     config.bootstrap_admin_name = "Invite Admin".to_string();
     config.app_base_url = "http://localhost:4200".to_string();
@@ -112,7 +112,7 @@ async fn admin_can_invite_user_and_user_accepts_once() {
                 .uri("/api/v1/auth/login")
                 .header("content-type", "application/json")
                 .body(Body::from(
-                    r#"{"email":"invite-admin@sango.local","password":"correct-password"}"#,
+                    r#"{"email":"invite-admin@wara.local","password":"correct-password"}"#,
                 ))
                 .unwrap(),
         )
@@ -132,7 +132,7 @@ async fn admin_can_invite_user_and_user_accepts_once() {
                 .header("authorization", format!("Bearer {admin_token}"))
                 .header("content-type", "application/json")
                 .body(Body::from(
-                    r#"{"email":"operator@sango.local","name":"Operator","role":"operator"}"#,
+                    r#"{"email":"operator@wara.local","name":"Operator","role":"operator"}"#,
                 ))
                 .unwrap(),
         )
@@ -166,7 +166,7 @@ async fn admin_can_invite_user_and_user_accepts_once() {
     assert_eq!(accept_response.status(), StatusCode::OK);
     let accept_body = response_json(accept_response).await;
     assert_eq!(accept_body["user"]["status"], "active");
-    assert_eq!(accept_body["user"]["email"], "operator@sango.local");
+    assert_eq!(accept_body["user"]["email"], "operator@wara.local");
     assert!(accept_body["token"].as_str().unwrap().split('.').count() == 3);
 
     let reuse_response = app
@@ -195,7 +195,7 @@ async fn response_json(response: axum::response::Response) -> Value {
 }
 
 async fn create_isolated_database(base_url: &str) -> String {
-    let db_name = format!("sango_test_{}", Uuid::now_v7().simple());
+    let db_name = format!("wara_test_{}", Uuid::now_v7().simple());
     let admin_url = replace_database_name(base_url, "postgres");
     let (client, connection) = tokio_postgres::connect(&admin_url, tokio_postgres::NoTls)
         .await

@@ -1,7 +1,7 @@
-# Sango Observability
+# Wara Observability
 
 This directory contains the optional local observability stack for developing
-and testing Sango platform telemetry. It is intended to monitor Sango platform
+and testing Wara platform telemetry. It is intended to monitor Wara platform
 services and workflows only, not hosted user applications.
 
 Current local services include Prometheus, Jaeger, Fluent Bit, Elasticsearch,
@@ -28,7 +28,7 @@ have an independent version.
 
 To release changes here, follow the core platform release process:
 
-1. Update `sango.version.toml`.
+1. Update `wara.version.toml`.
 2. Update backend/frontend versions to match.
 3. Update `CHANGELOG.md`.
 4. Run `make check-version`.

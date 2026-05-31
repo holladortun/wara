@@ -1,6 +1,6 @@
-# Sango Frontend
+# Wara Frontend
 
-The frontend is the Angular dashboard for Sango. It provides the browser UI for
+The frontend is the Angular dashboard for Wara. It provides the browser UI for
 managing servers, projects, environments, services, credentials, domains,
 deployments, telemetry settings, and invite acceptance.
 
@@ -36,7 +36,7 @@ independently from the backend and core Docker images.
 
 To release a new core platform version:
 
-1. Update `sango.version.toml` in the repository root.
+1. Update `wara.version.toml` in the repository root.
 2. Update `backend/Cargo.toml` to the same version.
 3. Update `frontend/package.json` and `frontend/package-lock.json` to the same
    version.

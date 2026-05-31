@@ -1,7 +1,7 @@
-# Sango Temporal
+# Wara Temporal
 
 This directory contains the local Temporal development stack and bootstrap
-scripts. Sango uses Temporal for background jobs such as deploys, restarts,
+scripts. Wara uses Temporal for background jobs such as deploys, restarts,
 proxy application, log collection, and template/bulk project creation.
 
 The backend owns workflow and activity code. This directory owns the supporting
@@ -34,7 +34,7 @@ independent version.
 
 To release changes here, follow the core platform release process:
 
-1. Update `sango.version.toml`.
+1. Update `wara.version.toml`.
 2. Update backend/frontend versions to match.
 3. Update `CHANGELOG.md`.
 4. Run `make check-version`.

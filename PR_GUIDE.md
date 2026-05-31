@@ -1,6 +1,6 @@
 # Pull Request Guide
 
-This guide defines how to prepare pull requests for Sango.
+This guide defines how to prepare pull requests for Wara.
 
 ## Before You Start
 
@@ -248,7 +248,7 @@ For dependency PRs, include:
 
 Core platform version changes must update:
 
-- `sango.version.toml`
+- `wara.version.toml`
 - `backend/Cargo.toml`
 - `frontend/package.json`
 - `frontend/package-lock.json`

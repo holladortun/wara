@@ -10,7 +10,7 @@ type Stat = {
 };
 
 @Component({
-  selector: "sango-root",
+  selector: "wara-root",
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: "./app.component.html",
@@ -59,9 +59,9 @@ export class AppComponent {
       })
       .subscribe({
         next: (response) => {
-          localStorage.setItem("sango_token", response.token);
+          localStorage.setItem("wara_token", response.token);
           this.inviteStatus = "accepted";
-          this.inviteMessage = "Password created. Redirecting to Sango.";
+          this.inviteMessage = "Password created. Redirecting to Wara.";
           window.setTimeout(() => window.location.assign("/"), 800);
         },
         error: () => {

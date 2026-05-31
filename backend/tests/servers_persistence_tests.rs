@@ -1,13 +1,13 @@
-use sango_backend::{
+use uuid::Uuid;
+use wara_backend::{
     libs::{config::Config, db, docker::ProxyKind},
     services::servers::{CreateServerInput, ServerService},
 };
-use uuid::Uuid;
 
 #[tokio::test]
 async fn servers_persist_with_encrypted_ssh_key_material() {
     let Some(database_url) = Config::from_env().test_database_url else {
-        eprintln!("skipping Toasty integration test; set SANGO_TEST_DATABASE_URL to run it");
+        eprintln!("skipping Toasty integration test; set WARA_TEST_DATABASE_URL to run it");
         return;
     };
 
@@ -66,7 +66,7 @@ async fn servers_persist_with_encrypted_ssh_key_material() {
 }
 
 async fn create_isolated_database(base_url: &str) -> String {
-    let db_name = format!("sango_test_{}", Uuid::now_v7().simple());
+    let db_name = format!("wara_test_{}", Uuid::now_v7().simple());
     let admin_url = replace_database_name(base_url, "postgres");
     let (client, connection) = tokio_postgres::connect(&admin_url, tokio_postgres::NoTls)
         .await

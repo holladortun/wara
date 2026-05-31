@@ -1,12 +1,12 @@
-# Sango Design And Style Guide
+# Wara Design And Style Guide
 
-This guide defines how Sango should look, feel, and be implemented. It is written
+This guide defines how Wara should look, feel, and be implemented. It is written
 for human contributors and AI coding agents. Follow it unless a maintainer
 explicitly approves a different direction.
 
 ## Product Principles
 
-Sango is an operational tool. The interface should feel calm, precise, and fast.
+Wara is an operational tool. The interface should feel calm, precise, and fast.
 It should help users repeatedly manage servers, projects, services, deployments,
 domains, credentials, and logs without visual noise.
 
@@ -16,7 +16,7 @@ Core product principles:
 - Self-hosted: users own their infrastructure, secrets, data, and telemetry.
 - Safe automation: APIs, CLI, and MCP expose scoped platform actions, not raw
   shell, raw SSH, Docker socket proxying, or database access.
-- Platform-only telemetry: OpenTelemetry monitors Sango itself, never hosted app
+- Platform-only telemetry: OpenTelemetry monitors Wara itself, never hosted app
   telemetry.
 - Secret discipline: secrets are encrypted or hashed at rest, redacted in
   responses, and never placed in JWT claims, logs, spans, or screenshots.
@@ -209,7 +209,7 @@ Future CLI and MCP work should be agent-friendly:
 ## Observability Style
 
 - Telemetry is disabled by default.
-- Telemetry must cover Sango platform internals only.
+- Telemetry must cover Wara platform internals only.
 - Redact secrets before logs, spans, metrics labels, or audit events.
 - Do not emit hosted app logs to platform telemetry exporters.
 - Metrics labels must be bounded cardinality.
