@@ -51,6 +51,10 @@ backend-run: ## Run the backend API locally.
 backend-worker: ## Run a Temporal worker locally. Override with QUEUE=high.
 	cargo run -p wara-backend --bin temporal_worker -- $(QUEUE)
 
+.PHONY: backend-migrate
+backend-migrate: ## Apply pending database schema migrations.
+	cargo run -p wara-backend --bin wara-migrate
+
 .PHONY: backend-fmt
 backend-fmt: ## Format Rust code.
 	cargo fmt --all

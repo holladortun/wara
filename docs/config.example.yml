@@ -8,7 +8,10 @@ bind_addr: 0.0.0.0:8080
 backend_port: 8080
 frontend_port: 4200
 secret_key: replace-with-a-long-random-secret
-db_push_schema: true
+# Apply versioned migrations on boot (default). Set db_push_schema only for
+# local model iteration; it lets Toasty regenerate the schema directly.
+db_auto_migrate: true
+db_push_schema: false
 docs_enabled: true
 remote_services_root: /opt/wara/services
 dockerfile_context_dir: context
