@@ -48,10 +48,10 @@ axum-valid = "0.24.0"
 validator = { version = "0.20.0", features = ["derive"] }
 argon2 = "0.5.3"
 jsonwebtoken = { version = "10.4.0", features = ["rsa"] }
-# Used by the schema migration runner (libs/migrations.rs) to execute SQL
-# directly; Toasty exposes no migration API. Already present transitively and as
-# a dev-dependency, so this is a section move, not a new external crate.
-tokio-postgres = "0.7.17"
+# Drives the `wara-migrate` binary: Toasty's first-class migration system
+# (Toasty.toml + generate/apply/snapshot over the registered models).
+toasty-cli = "0.7"
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
+tokio-postgres = "0.7.17"

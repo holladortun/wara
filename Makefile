@@ -53,7 +53,11 @@ backend-worker: ## Run a Temporal worker locally. Override with QUEUE=high.
 
 .PHONY: backend-migrate
 backend-migrate: ## Apply pending database schema migrations.
-	cargo run -p wara-backend --bin wara-migrate
+	cd backend && cargo run --bin wara-migrate -- migration apply
+
+.PHONY: backend-migrate-generate
+backend-migrate-generate: ## Generate a migration from model changes. Pass NAME=describe_change.
+	cd backend && cargo run --bin wara-migrate -- migration generate --name $(NAME)
 
 .PHONY: backend-fmt
 backend-fmt: ## Format Rust code.

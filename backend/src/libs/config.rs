@@ -82,7 +82,6 @@ pub struct Config {
     pub database_url: String,
     pub secret_key: String,
     pub db_push_schema: bool,
-    pub db_auto_migrate: bool,
     pub docs_enabled: bool,
     pub remote_services_root: String,
     pub dockerfile_context_dir: String,
@@ -160,7 +159,6 @@ impl Config {
                 "development-secret-change-me".to_string(),
             ),
             db_push_schema: bool_setting("WARA_DB_PUSH_SCHEMA", file.db_push_schema, false),
-            db_auto_migrate: bool_setting("WARA_DB_AUTO_MIGRATE", file.db_auto_migrate, true),
             docs_enabled: bool_setting("WARA_DOCS_ENABLED", file.docs_enabled, true),
             remote_services_root: setting(
                 "WARA_REMOTE_SERVICES_ROOT",
@@ -332,7 +330,6 @@ struct ConfigFile {
     database_url: Option<String>,
     secret_key: Option<String>,
     db_push_schema: Option<bool>,
-    db_auto_migrate: Option<bool>,
     docs_enabled: Option<bool>,
     remote_services_root: Option<String>,
     dockerfile_context_dir: Option<String>,
@@ -468,7 +465,6 @@ mod tests {
         assert_eq!(config.dockerfile_context_dir, "src");
         assert_eq!(config.temporal_namespace, "wara");
         assert_eq!(config.otel_service_name, "wara-backend");
-        assert!(config.db_auto_migrate);
         assert!(!config.db_push_schema);
     }
 

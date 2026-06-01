@@ -1,5 +1,4 @@
 use crate::libs::config::Config;
-use crate::libs::migrations;
 use crate::{
     entities::{
         credentials::{DockerCredentialRecord, EnvVarRecord},
@@ -21,7 +20,13 @@ pub struct Database {
     toasty: Option<toasty::Db>,
 }
 
-pub async fn connect(config: &Config) -> anyhow::Result<Database> {
+/// Build a connected Toasty `Db` with every product model registered.
+///
+/// Shared by [`connect`] and the `wara-migrate` binary so the model set has a
+/// single source of truth. This does not create or migrate the schema; schema is
+/// managed by the `wara-migrate` migration commands (or, for local iteration, by
+/// `WARA_DB_PUSH_SCHEMA`).
+pub async fn build_toasty(config: &Config) -> anyhow::Result<toasty::Db> {
     let db = toasty::Db::builder()
         .models(toasty::models!(
             Project,
@@ -38,24 +43,17 @@ pub async fn connect(config: &Config) -> anyhow::Result<Database> {
         ))
         .connect(&config.database_url)
         .await?;
+    Ok(db)
+}
 
-    // Schema management precedence:
-    // - `WARA_DB_PUSH_SCHEMA` (default false) is an explicit dev escape hatch that
-    //   lets Toasty regenerate the schema directly while iterating on models.
-    // - Otherwise `WARA_DB_AUTO_MIGRATE` (default true) applies versioned
-    //   migrations so fresh databases boot without any push, and upgrades are
-    //   tracked. Migration failures propagate; there is no silent push fallback.
-    // - If both are disabled, the operator is expected to run `wara-migrate`
-    //   out of band, and queries fail loudly if the schema is absent.
+pub async fn connect(config: &Config) -> anyhow::Result<Database> {
+    let db = build_toasty(config).await?;
+
+    // Schema is applied out of band by `wara-migrate migration apply`.
+    // `WARA_DB_PUSH_SCHEMA` (default false) remains a local-only escape hatch that
+    // lets Toasty regenerate the schema directly while iterating on models.
     if config.db_push_schema {
         db.push_schema().await?;
-    } else if config.db_auto_migrate {
-        let report = migrations::run_pending(&config.database_url).await?;
-        if report.is_up_to_date() {
-            tracing::info!("database schema is up to date");
-        } else {
-            tracing::info!(applied = ?report.applied, "applied database migrations");
-        }
     }
 
     tracing::info!("Toasty PostgreSQL database initialized");

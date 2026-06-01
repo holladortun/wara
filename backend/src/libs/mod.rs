@@ -3,7 +3,6 @@ pub mod crypto;
 pub mod db;
 pub mod docker;
 pub mod metrics;
-pub mod migrations;
 pub mod observability;
 pub mod ssh;
 pub mod telemetry;

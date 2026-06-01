@@ -14,6 +14,7 @@ async fn projects_and_default_environment_persist_with_toasty_when_database_is_c
     let test_database_url = create_isolated_database(&database_url).await;
     let mut config = Config::from_env();
     config.database_url = test_database_url.clone();
+    config.db_push_schema = true;
     let database = db::connect(&config).await.expect("connect test database");
     let service = ProjectService::new(database);
 

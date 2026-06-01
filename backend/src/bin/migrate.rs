@@ -1,40 +1,26 @@
-//! `wara-migrate` applies pending database schema migrations and exits.
+//! `wara-migrate` — the single migration binary for Wara's database schema.
 //!
-//! Run this before starting the backend in CI and production, or rely on the
-//! backend's boot-time auto-migrate (`WARA_DB_AUTO_MIGRATE`, default on) for
-//! local development.
+//! Thin wrapper around Toasty's migration tooling (`toasty-cli`). It builds a
+//! Toasty `Db` with every product model registered, loads migration settings
+//! from `Toasty.toml`, and dispatches the requested subcommand:
+//!
+//! - `wara-migrate migration generate --name <name>` — author a new migration
+//!   from the current model/schema diff.
+//! - `wara-migrate migration apply` — apply pending migrations.
+//! - `wara-migrate migration snapshot` — print the current schema snapshot.
+//!
+//! Run it from the `backend/` directory (the Makefile target and Docker image do)
+//! so `Toasty.toml` and the `toasty/` migration directory resolve.
 
-use wara_backend::libs::{config::Config, migrations, telemetry};
+use toasty_cli::{Config as MigrationConfig, ToastyCli};
+use wara_backend::libs::{config::Config, db};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let config = Config::from_env();
-    let guard = telemetry::init(&config)?;
-
-    let result = migrations::run_pending(&config.database_url).await;
-
-    match &result {
-        Ok(report) if report.is_up_to_date() => {
-            tracing::info!(
-                already_current = report.already_current,
-                "database schema is up to date; no migrations to apply"
-            );
-        }
-        Ok(report) => {
-            tracing::info!(
-                applied = ?report.applied,
-                already_current = report.already_current,
-                "applied database migrations"
-            );
-        }
-        Err(error) => {
-            tracing::error!(%error, "database migration failed");
-        }
-    }
-
-    // Shut telemetry down on a best-effort basis: the migration outcome is the
-    // meaningful exit status, so never let a shutdown error mask a migration error.
-    let shutdown = telemetry::shutdown(guard);
-    result.map(|_| ())?;
-    shutdown
+    let db = db::build_toasty(&config).await?;
+    let migration_config = MigrationConfig::load()?;
+    ToastyCli::with_config(db, migration_config)
+        .parse_and_run()
+        .await
 }

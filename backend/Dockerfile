@@ -8,5 +8,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 COPY --from=builder /app/target/release/wara-backend /usr/local/bin/wara-backend
 COPY --from=builder /app/target/release/temporal_worker /usr/local/bin/temporal_worker
 COPY --from=builder /app/target/release/wara-migrate /usr/local/bin/wara-migrate
+# Migration files + config so `wara-migrate migration apply` works at runtime.
+WORKDIR /app
+COPY --from=builder /app/Toasty.toml /app/Toasty.toml
+COPY --from=builder /app/toasty /app/toasty
 CMD ["wara-backend"]
 

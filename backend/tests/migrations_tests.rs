@@ -1,13 +1,29 @@
+use std::process::Command;
+
 use uuid::Uuid;
 use wara_backend::{
-    libs::{config::Config, db, migrations},
+    libs::{config::Config, db},
     services::projects::ProjectService,
 };
 
-/// Migrations applied to an empty database must yield a fully working schema
-/// without ever calling `push_schema`, and the run must be idempotent.
+/// Run the real `wara-migrate` binary against `database_url`. Cargo exposes the
+/// built binary path via `CARGO_BIN_EXE_*`; the working directory is the backend
+/// crate root so `Toasty.toml` and `toasty/` resolve.
+fn run_migrate(database_url: &str, args: &[&str]) -> std::process::Output {
+    Command::new(env!("CARGO_BIN_EXE_wara-migrate"))
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .args(args)
+        .env("DATABASE_URL", database_url)
+        .env("WARA_TELEMETRY_ENABLED", "false")
+        .output()
+        .expect("run wara-migrate")
+}
+
+/// Applying migrations to an empty database via the single migration binary must
+/// produce a fully working schema (no `push_schema`), and re-running must be a
+/// no-op.
 #[tokio::test]
-async fn migrations_initialize_a_fresh_database() {
+async fn migration_apply_initializes_a_fresh_database() {
     let Some(database_url) = Config::from_env().test_database_url else {
         eprintln!("skipping migration integration test; set WARA_TEST_DATABASE_URL to run it");
         return;
@@ -15,29 +31,23 @@ async fn migrations_initialize_a_fresh_database() {
 
     let test_database_url = create_isolated_database(&database_url).await;
 
-    // First run applies the baseline.
-    let report = migrations::run_pending(&test_database_url)
-        .await
-        .expect("apply migrations to fresh database");
-    assert_eq!(report.applied, vec!["0001_baseline".to_string()]);
-    assert_eq!(report.already_current, 0);
-    assert!(!report.is_up_to_date());
+    // First apply creates the schema.
+    let output = run_migrate(&test_database_url, &["migration", "apply"]);
+    assert!(
+        output.status.success(),
+        "first apply failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Successfully applied 1 migration"),
+        "unexpected apply output: {stdout}"
+    );
 
-    // Second run is a no-op: everything is already recorded.
-    let report = migrations::run_pending(&test_database_url)
-        .await
-        .expect("re-run migrations");
-    assert!(report.applied.is_empty());
-    assert!(report.is_up_to_date());
-    assert_eq!(report.already_current, 1);
-
-    // The schema produced by migrations alone must be usable. Connect with both
-    // push-schema and auto-migrate disabled so only the migrated schema is in play.
+    // The migrated schema must be usable with no push_schema in play.
     let mut config = Config::from_env();
     config.database_url = test_database_url.clone();
     config.db_push_schema = false;
-    config.db_auto_migrate = false;
-
     let database = db::connect(&config)
         .await
         .expect("connect to migrated database");
@@ -58,95 +68,13 @@ async fn migrations_initialize_a_fresh_database() {
         "project creation should seed a default environment"
     );
 
-    drop_isolated_database(&test_database_url).await;
-}
-
-/// A database created the old way (Toasty `push_schema()`, no migration history)
-/// must adopt the baseline cleanly rather than failing because its tables already
-/// exist. This is the upgrade path for existing development databases.
-#[tokio::test]
-async fn migrations_adopt_an_existing_push_schema_database() {
-    let Some(database_url) = Config::from_env().test_database_url else {
-        eprintln!("skipping migration adoption test; set WARA_TEST_DATABASE_URL to run it");
-        return;
-    };
-
-    let test_database_url = create_isolated_database(&database_url).await;
-
-    // Reproduce a pre-migrations database: schema built by push_schema, with no
-    // _wara_schema_migrations table.
-    let mut config = Config::from_env();
-    config.database_url = test_database_url.clone();
-    config.db_push_schema = true;
-    config.db_auto_migrate = false;
-    db::connect(&config)
-        .await
-        .expect("build schema via push_schema");
-
-    // Applying the baseline must adopt the existing schema, not error on
-    // already-existing tables, and record the migration as applied.
-    let report = migrations::run_pending(&test_database_url)
-        .await
-        .expect("adopt existing schema without error");
-    assert_eq!(report.applied, vec!["0001_baseline".to_string()]);
-
-    // And it stays idempotent afterwards.
-    let report = migrations::run_pending(&test_database_url)
-        .await
-        .expect("re-run after adoption");
-    assert!(report.is_up_to_date());
-
-    // The adopted schema is still fully usable.
-    config.db_push_schema = false;
-    let database = db::connect(&config)
-        .await
-        .expect("connect to adopted database");
-    let project = ProjectService::new(database)
-        .create_project(format!("adoption-check-{}", Uuid::now_v7().simple()), None)
-        .await
-        .expect("create project on adopted schema");
-    assert!(!project.name.is_empty());
-
-    drop_isolated_database(&test_database_url).await;
-}
-
-/// A migration that was modified after being applied must fail loudly rather
-/// than silently re-running or being ignored.
-#[tokio::test]
-async fn modified_applied_migration_is_rejected() {
-    let Some(database_url) = Config::from_env().test_database_url else {
-        eprintln!("skipping migration drift test; set WARA_TEST_DATABASE_URL to run it");
-        return;
-    };
-
-    let test_database_url = create_isolated_database(&database_url).await;
-    migrations::run_pending(&test_database_url)
-        .await
-        .expect("apply migrations");
-
-    // Simulate the recorded checksum drifting from the embedded migration.
-    let (client, connection) = tokio_postgres::connect(&test_database_url, tokio_postgres::NoTls)
-        .await
-        .expect("connect to tamper with history");
-    tokio::spawn(async move {
-        let _ = connection.await;
-    });
-    client
-        .execute(
-            "UPDATE _wara_schema_migrations SET checksum = 'tampered' WHERE version = '0001_baseline'",
-            &[],
-        )
-        .await
-        .expect("tamper checksum");
-    drop(client);
-
-    let error = migrations::run_pending(&test_database_url)
-        .await
-        .expect_err("modified migration must be rejected");
-    let message = format!("{error:#}");
+    // Re-applying is idempotent.
+    let output = run_migrate(&test_database_url, &["migration", "apply"]);
+    assert!(output.status.success(), "re-apply failed");
+    let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
-        message.contains("modified after being applied"),
-        "unexpected error: {message}"
+        stdout.contains("up to date") || stdout.contains("No pending"),
+        "second apply should be a no-op: {stdout}"
     );
 
     drop_isolated_database(&test_database_url).await;
