@@ -6,5 +6,5 @@
 [migration]
 path = "toasty"
 prefix_style = "Sequential"
-checksums = true
+checksums = false
 statement_breakpoints = true
