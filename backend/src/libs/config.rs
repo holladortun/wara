@@ -454,6 +454,7 @@ mod tests {
         let vars = [
             "BIND_ADDR",
             "DATABASE_URL",
+            "WARA_DB_PUSH_SCHEMA",
             "WARA_TELEMETRY_ENABLED",
             "WARA_REMOTE_SERVICES_ROOT",
             "WARA_DOCKERFILE_CONTEXT_DIR",
